@@ -37,6 +37,10 @@
     </style>
 </head>
 <body>
+
+    <div style="text-align: right; margin-bottom: 20px;">
+    <a href="tambah_data.php" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">➕ Tambah Data Baru</a>
+</div>
     <h1>Daftar Kendaraan Rental</h1>
 
     <?php
