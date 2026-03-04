@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rental Kendaraan - Pencarian</title>
+    <title>Rental Kendaraan - Database</title>
     <style>
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
@@ -24,7 +24,6 @@
             color: #333;
             margin-bottom: 30px;
         }
-        
         .header-actions {
             display: flex;
             justify-content: space-between;
@@ -43,6 +42,7 @@
             background-color: #45a049;
         }
         
+        /* Style untuk form pencarian */
         .search-form {
             display: flex;
             gap: 10px;
@@ -88,6 +88,7 @@
             background-color: #5a6268;
         }
         
+        /* Style untuk info pencarian */
         .search-info {
             background-color: #e7f3ff;
             padding: 10px;
@@ -96,6 +97,7 @@
             border-left: 4px solid #2196F3;
         }
         
+        /* Style untuk tabel */
         table {
             width: 100%;
             border-collapse: collapse;
@@ -125,6 +127,7 @@
             font-weight: bold;
         }
         
+        /* Style untuk pesan data tidak ditemukan */
         .not-found {
             text-align: center;
             padding: 40px;
@@ -150,84 +153,54 @@
 </head>
 <body>
     <div class="container">
-        <h1>🚗 RENTAL KENDARAAN</h1>
+        <h1>🚗 RENTAL KENDARAAN NAJWA</h1>
         
+        <!-- Header dengan tombol tambah data -->
         <div class="header-actions">
-            <div></div> 
+            <div></div>
             <a href="tambah_data.php" class="btn-tambah">➕ Tambah Data Baru</a>
         </div>
         
         <?php
+        // =============================================
+        // KONEKSI KE DATABASE
+        // =============================================
+        include 'koneksi.php';
         
-        $kendaraan = [
-            [
-                'id' => 1,
-                'merk_kendaraan' => 'Toyota Avanza',
-                'plat_nomor' => 'B 1234 ABC',
-                'harga_sewa' => 350000,
-                'kondisi_mesin' => 'Bagus'
-            ],
-            [
-                'id' => 2,
-                'merk_kendaraan' => 'Honda Brio',
-                'plat_nomor' => 'B 5678 XYZ',
-                'harga_sewa' => 300000,
-                'kondisi_mesin' => 'Service'
-            ],
-            [
-                'id' => 3,
-                'merk_kendaraan' => 'Suzuki Ertiga',
-                'plat_nomor' => 'D 9012 DEF',
-                'harga_sewa' => 375000,
-                'kondisi_mesin' => 'Bagus'
-            ],
-            [
-                'id' => 4,
-                'merk_kendaraan' => 'Daihatsu Xenia',
-                'plat_nomor' => 'B 3456 GHI',
-                'harga_sewa' => 325000,
-                'kondisi_mesin' => 'Service'
-            ],
-            [
-                'id' => 5,
-                'merk_kendaraan' => 'Mitsubishi Xpander',
-                'plat_nomor' => 'F 7890 JKL',
-                'harga_sewa' => 400000,
-                'kondisi_mesin' => 'Bagus'
-            ]
-        ];
+        // =============================================
+        // LOGIKA PENCARIAN
+        // =============================================
+        $keyword = '';
+        $is_searching = false;
         
-    
-        $keyword = ''; 
-        $hasil_pencarian = []; 
-        $is_searching = false; 
-        
+        // Cek apakah ada parameter GET 'keyword'
         if (isset($_GET['keyword']) && !empty(trim($_GET['keyword']))) {
             $is_searching = true;
-            $keyword = trim($_GET['keyword']); 
+            $keyword = trim($_GET['keyword']);
             
-            foreach ($kendaraan as $item) {
-               
-                $keyword_lower = strtolower($keyword);
-                $merk_lower = strtolower($item['merk_kendaraan']);
-                $plat_lower = strtolower($item['plat_nomor']);
-                
-                
-                if (str_contains($merk_lower, $keyword_lower) || str_contains($plat_lower, $keyword_lower)) {
-                    $hasil_pencarian[] = $item; 
-                }
-            }
+            // Query dengan pencarian (gunakan LIKE untuk mencari sebagai)
+            $keyword_like = "%$keyword%";
+            $query = "SELECT * FROM kendaraan 
+                      WHERE merk_kendaraan LIKE ? 
+                      OR plat_nomor LIKE ?
+                      ORDER BY id ASC";
+            
+            // Prepare statement untuk keamanan
+            $stmt = mysqli_prepare($conn, $query);
+            mysqli_stmt_bind_param($stmt, "ss", $keyword_like, $keyword_like);
+            mysqli_stmt_execute($stmt);
+            $result = mysqli_stmt_get_result($stmt);
+        } else {
+            // Query semua data
+            $query = "SELECT * FROM kendaraan ORDER BY id ASC";
+            $result = mysqli_query($conn, $query);
         }
         
-        if ($is_searching) {
-            $data_tampil = $hasil_pencarian;
-            $jumlah_data = count($data_tampil);
-        } else {
-            $data_tampil = $kendaraan;
-            $jumlah_data = count($data_tampil);
-        }
+        // Hitung jumlah data
+        $jumlah_data = mysqli_num_rows($result);
         ?>
         
+        <!-- Form Pencarian -->
         <form method="GET" action="index.php" class="search-form">
             <input type="text" 
                    name="keyword" 
@@ -237,12 +210,14 @@
             <button type="submit">Cari</button>
         </form>
         
+        <!-- Tombol Reset Pencarian -->
         <?php if ($is_searching): ?>
         <div style="text-align: right; margin-bottom: 10px;">
             <a href="index.php" class="btn-reset">↺ Reset Pencarian</a>
         </div>
         <?php endif; ?>
         
+        <!-- Info pencarian -->
         <?php if ($is_searching): ?>
         <div class="search-info">
             <strong>🔍 Hasil pencarian untuk:</strong> "<?php echo htmlspecialchars($keyword); ?>"<br>
@@ -250,6 +225,7 @@
         </div>
         <?php endif; ?>
         
+        <!-- Tabel Data Kendaraan -->
         <table>
             <thead>
                 <tr>
@@ -263,49 +239,56 @@
             </thead>
             <tbody>
                 <?php
-            
+                // Cek apakah ada data
                 if ($jumlah_data > 0):
-                   
-                    foreach ($data_tampil as $data):
+                    // Looping data dari database dengan mysqli_fetch_assoc
+                    while ($row = mysqli_fetch_assoc($result)):
+                        // Format harga
+                        $harga_format = "Rp " . number_format($row['harga_sewa'], 0, ',', '.');
                         
-                        $harga_format = "Rp " . number_format($data['harga_sewa'], 0, ',', '.');
-                        
-                        if ($data['kondisi_mesin'] == 'Service') {
+                        // Tentukan status berdasarkan kondisi mesin
+                        if ($row['kondisi_mesin'] == 'Service') {
                             $status = '<span class="tidak-tersedia">❌ Tidak Tersedia - Sedang di Bengkel</span>';
                         } else {
                             $status = '<span class="tersedia">✅ Siap Disewa</span>';
                         }
                         
+                        // Tampilkan baris tabel
                         echo "<tr>";
-                        echo "<td>" . $data['id'] . "</td>";
-                        echo "<td>" . htmlspecialchars($data['merk_kendaraan']) . "</td>";
-                        echo "<td>" . htmlspecialchars($data['plat_nomor']) . "</td>";
+                        echo "<td>" . $row['id'] . "</td>";
+                        echo "<td>" . htmlspecialchars($row['merk_kendaraan']) . "</td>";
+                        echo "<td>" . htmlspecialchars($row['plat_nomor']) . "</td>";
                         echo "<td>" . $harga_format . "</td>";
-                        echo "<td>" . $data['kondisi_mesin'] . "</td>";
+                        echo "<td>" . $row['kondisi_mesin'] . "</td>";
                         echo "<td>" . $status . "</td>";
                         echo "</tr>";
-                    endforeach;
+                    endwhile;
                 else:
-                   
+                    // Tampilkan pesan jika data tidak ditemukan
                     echo '<tr><td colspan="6" class="not-found">';
                     echo '<i>🔍</i>';
                     echo '<h3>Data Tidak Ditemukan</h3>';
-                    echo '<p>Maaf, kendaraan dengan kata kunci "' . htmlspecialchars($keyword) . '" tidak ditemukan.</p>';
-                    echo '<p>Silakan coba dengan kata kunci lain atau ';
-                    echo '<a href="index.php" style="color: #4CAF50;">reset pencarian</a>.</p>';
+                    if ($is_searching) {
+                        echo '<p>Maaf, kendaraan dengan kata kunci "' . htmlspecialchars($keyword) . '" tidak ditemukan.</p>';
+                    } else {
+                        echo '<p>Belum ada data kendaraan di database.</p>';
+                    }
+                    echo '<p><a href="tambah_data.php" style="color: #4CAF50;">Tambah data sekarang</a></p>';
                     echo '</td></tr>';
                 endif;
+                
+                // Bebaskan memory
+                mysqli_free_result($result);
                 ?>
             </tbody>
         </table>
         
+        <!-- Footer -->
         <div class="footer-actions">
-            <small>Total Data: <?php echo count($kendaraan); ?> kendaraan</small>
-            <?php if ($is_searching): ?>
-            <small> | Hasil Pencarian: <?php echo $jumlah_data; ?> kendaraan</small>
-            <?php endif; ?>
+            <small>Total Data: <?php echo $jumlah_data; ?> kendaraan</small>
         </div>
         
+        <!-- Keterangan -->
         <div style="text-align: center; margin-top: 30px; padding: 15px; background-color: #f9f9f9; border-radius: 5px;">
             <p><strong>Keterangan:</strong></p>
             <p><span style="color: green;">✅ Siap Disewa</span> (Kondisi Mesin Bagus)</p>

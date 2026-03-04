@@ -80,6 +80,15 @@
     </style>
 </head>
 <body>
+
+<?php
+if (isset($_GET['status']) && $_GET['status'] == 'sukses') {
+    echo '<div style="background-color: #d4edda; color: #155724; padding: 10px; border-radius: 5px; margin-bottom: 20px; text-align: center;">';
+    echo '✅ Data berhasil ditambahkan!';
+    echo '</div>';
+}
+?>
+
     <div class="container">
         <h1>🚗 TAMBAH DATA KENDARAAN</h1>
 

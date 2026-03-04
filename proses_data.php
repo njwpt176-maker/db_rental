@@ -77,35 +77,36 @@
         .button-danger:hover {
             background-color: #c82333;
         }
-        .debug {
-            background-color: #e9ecef;
-            padding: 10px;
-            border-radius: 5px;
-            margin-top: 20px;
-            font-family: monospace;
-            font-size: 14px;
-            border: 1px solid #ced4da;
-        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>📋 HASIL PROSES DATA</h1>
-
-        <?php
+        <h1>📋 PROSES TAMBAH DATA</h1>
         
+        <?php
+        // =============================================
+        // KONEKSI KE DATABASE
+        // =============================================
+        include 'koneksi.php';
+        
+        // =============================================
+        // CEK APAKAH FORM DISUBMIT
+        // =============================================
         if (isset($_POST['submit'])) {
             
+            // Tangkap data dari form dan bersihkan dengan trim
             $merk = isset($_POST['merk']) ? trim($_POST['merk']) : '';
             $plat = isset($_POST['plat']) ? trim($_POST['plat']) : '';
             $harga = isset($_POST['harga']) ? trim($_POST['harga']) : '';
             $kondisi = isset($_POST['kondisi']) ? trim($_POST['kondisi']) : '';
-
+            
+            // =============================================
+            // VALIDASI DATA KOSONG
+            // =============================================
             if (empty($merk) || empty($plat) || empty($harga) || empty($kondisi)) {
-                
+                // Tampilkan pesan error
                 echo '<div class="error">';
                 echo '<h3>❌ Error: Semua kolom wajib diisi!</h3>';
-                echo '<p>Mohon lengkapi semua data kendaraan.</p>';
                 echo '<ul>';
                 if (empty($merk)) echo '<li>Merk kendaraan belum diisi</li>';
                 if (empty($plat)) echo '<li>Plat nomor belum diisi</li>';
@@ -114,39 +115,51 @@
                 echo '</ul>';
                 echo '<a href="tambah_data.php" class="button">⬅️ Kembali ke Form</a>';
                 echo '</div>';
-                
             } else {
+                // =============================================
+                // QUERY INSERT MENGGUNAKAN PREPARED STATEMENT
+                // =============================================
                 
-                $harga_format = "Rp " . number_format($harga, 0, ',', '.');
-
-                if ($kondisi == 'Service') {
-                    $status = '<span style="color: red;">❌ Tidak Tersedia - Sedang di Bengkel</span>';
+                // Query dengan tanda tanya (?) untuk values
+                $query = "INSERT INTO kendaraan (merk_kendaraan, plat_nomor, harga_sewa, kondisi_mesin) 
+                          VALUES (?, ?, ?, ?)";
+                
+                // Prepare statement
+                $stmt = mysqli_prepare($conn, $query);
+                
+                if ($stmt) {
+                    // Bind parameter ke prepared statement
+                    // "ssss" = string, string, string, string
+                    // (harga sebenarnya integer, tapi kita bind sebagai string dulu)
+                    mysqli_stmt_bind_param($stmt, "ssss", $merk, $plat, $harga, $kondisi);
+                    
+                    // Eksekusi query
+                    if (mysqli_stmt_execute($stmt)) {
+                        // Jika berhasil, redirect ke index.php
+                        header("Location: index.php?status=sukses");
+                        exit(); // Penting: hentikan eksekusi setelah redirect
+                    } else {
+                        // Jika gagal, tampilkan error
+                        echo '<div class="error">';
+                        echo '<h3>❌ Gagal menyimpan data!</h3>';
+                        echo '<p>Error: ' . mysqli_error($conn) . '</p>';
+                        echo '<a href="tambah_data.php" class="button">⬅️ Kembali ke Form</a>';
+                        echo '</div>';
+                    }
+                    
+                    // Tutup statement
+                    mysqli_stmt_close($stmt);
                 } else {
-                    $status = '<span style="color: green;">✅ Siap Disewa</span>';
+                    // Jika prepare gagal
+                    echo '<div class="error">';
+                    echo '<h3>❌ Gagal mempersiapkan query!</h3>';
+                    echo '<p>Error: ' . mysqli_error($conn) . '</p>';
+                    echo '<a href="tambah_data.php" class="button">⬅️ Kembali ke Form</a>';
+                    echo '</div>';
                 }
-
-                echo '<div class="success">';
-                echo '<h3>✅ Data Berhasil Diproses!</h3>';
-                echo '<p>Data kendaraan berikut telah diterima:</p>';
-                echo '</div>';
-
-                echo '<table class="data-table">';
-                echo '<tr><th>ID</th><td># (Auto Increment)</td></tr>';
-                echo '<tr><th>Merk Kendaraan</th><td>' . htmlspecialchars($merk) . '</td></tr>';
-                echo '<tr><th>Plat Nomor</th><td>' . htmlspecialchars($plat) . '</td></tr>';
-                echo '<tr><th>Harga Sewa</th><td>' . $harga_format . '</td></tr>';
-                echo '<tr><th>Kondisi Mesin</th><td>' . htmlspecialchars($kondisi) . '</td></tr>';
-                echo '<tr><th>Status</th><td>' . $status . '</td></tr>';
-                echo '</table>';
-
-                echo '<div style="text-align: center; margin-top: 30px;">';
-                echo '<a href="tambah_data.php" class="button">➕ Tambah Data Lagi</a> ';
-                echo '<a href="index.php" class="button button-danger">📋 Lihat Daftar Kendaraan</a>';
-                echo '</div>';
             }
-            
         } else {
-            // Jika langsung akses file proses_data.php tanpa submit form
+            // Jika langsung akses file ini tanpa submit form
             echo '<div class="error">';
             echo '<h3>⚠️ Akses Tidak Sah!</h3>';
             echo '<p>Anda tidak boleh mengakses halaman ini secara langsung.</p>';
@@ -154,8 +167,10 @@
             echo '<a href="tambah_data.php" class="button">⬅️ Kembali ke Form</a>';
             echo '</div>';
         }
-        ?>
         
+        // Tutup koneksi database
+        mysqli_close($conn);
+        ?>
     </div>
 </body>
 </html>
