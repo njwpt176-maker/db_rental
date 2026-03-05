@@ -84,27 +84,20 @@
         <h1>📋 PROSES TAMBAH DATA</h1>
         
         <?php
-        // =============================================
-        // KONEKSI KE DATABASE
-        // =============================================
+        
         include 'koneksi.php';
         
-        // =============================================
-        // CEK APAKAH FORM DISUBMIT
-        // =============================================
+       
         if (isset($_POST['submit'])) {
             
-            // Tangkap data dari form dan bersihkan dengan trim
             $merk = isset($_POST['merk']) ? trim($_POST['merk']) : '';
             $plat = isset($_POST['plat']) ? trim($_POST['plat']) : '';
             $harga = isset($_POST['harga']) ? trim($_POST['harga']) : '';
             $kondisi = isset($_POST['kondisi']) ? trim($_POST['kondisi']) : '';
             
-            // =============================================
-            // VALIDASI DATA KOSONG
-            // =============================================
+            
             if (empty($merk) || empty($plat) || empty($harga) || empty($kondisi)) {
-                // Tampilkan pesan error
+                
                 echo '<div class="error">';
                 echo '<h3>❌ Error: Semua kolom wajib diisi!</h3>';
                 echo '<ul>';
@@ -116,30 +109,24 @@
                 echo '<a href="tambah_data.php" class="button">⬅️ Kembali ke Form</a>';
                 echo '</div>';
             } else {
-                // =============================================
-                // QUERY INSERT MENGGUNAKAN PREPARED STATEMENT
-                // =============================================
                 
-                // Query dengan tanda tanya (?) untuk values
+                
                 $query = "INSERT INTO kendaraan (merk_kendaraan, plat_nomor, harga_sewa, kondisi_mesin) 
                           VALUES (?, ?, ?, ?)";
                 
-                // Prepare statement
                 $stmt = mysqli_prepare($conn, $query);
                 
                 if ($stmt) {
-                    // Bind parameter ke prepared statement
-                    // "ssss" = string, string, string, string
-                    // (harga sebenarnya integer, tapi kita bind sebagai string dulu)
+                    
                     mysqli_stmt_bind_param($stmt, "ssss", $merk, $plat, $harga, $kondisi);
                     
-                    // Eksekusi query
+                   
                     if (mysqli_stmt_execute($stmt)) {
-                        // Jika berhasil, redirect ke index.php
+                       
                         header("Location: index.php?status=sukses");
-                        exit(); // Penting: hentikan eksekusi setelah redirect
+                        exit(); 
                     } else {
-                        // Jika gagal, tampilkan error
+                        
                         echo '<div class="error">';
                         echo '<h3>❌ Gagal menyimpan data!</h3>';
                         echo '<p>Error: ' . mysqli_error($conn) . '</p>';
@@ -147,10 +134,9 @@
                         echo '</div>';
                     }
                     
-                    // Tutup statement
                     mysqli_stmt_close($stmt);
                 } else {
-                    // Jika prepare gagal
+                    
                     echo '<div class="error">';
                     echo '<h3>❌ Gagal mempersiapkan query!</h3>';
                     echo '<p>Error: ' . mysqli_error($conn) . '</p>';
@@ -159,7 +145,7 @@
                 }
             }
         } else {
-            // Jika langsung akses file ini tanpa submit form
+           
             echo '<div class="error">';
             echo '<h3>⚠️ Akses Tidak Sah!</h3>';
             echo '<p>Anda tidak boleh mengakses halaman ini secara langsung.</p>';
@@ -168,7 +154,6 @@
             echo '</div>';
         }
         
-        // Tutup koneksi database
         mysqli_close($conn);
         ?>
     </div>

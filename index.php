@@ -127,6 +127,41 @@
             font-weight: bold;
         }
         
+        /* Style untuk tombol aksi */
+        .btn-edit {
+            background-color: #2196F3;
+            color: white;
+            padding: 5px 10px;
+            text-decoration: none;
+            border-radius: 3px;
+            margin-right: 5px;
+            font-size: 13px;
+            display: inline-block;
+        }
+        
+        .btn-edit:hover {
+            background-color: #1976D2;
+        }
+        
+        .btn-hapus {
+            background-color: #f44336;
+            color: white;
+            padding: 5px 10px;
+            text-decoration: none;
+            border-radius: 3px;
+            font-size: 13px;
+            display: inline-block;
+        }
+        
+        .btn-hapus:hover {
+            background-color: #d32f2f;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+        }
+        
         /* Style untuk pesan data tidak ditemukan */
         .not-found {
             text-align: center;
@@ -149,6 +184,17 @@
             justify-content: center;
             margin-top: 20px;
         }
+        
+        /* Style untuk pesan status */
+        .status-message {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: center;
+            border: 1px solid #c3e6cb;
+        }
     </style>
 </head>
 <body>
@@ -168,6 +214,19 @@
         include 'koneksi.php';
         
         // =============================================
+        // TAMPILKAN PESAN STATUS (HAPUS/EDIT)
+        // =============================================
+        if (isset($_GET['status'])) {
+            $status = $_GET['status'];
+            
+            if ($status == 'hapus_sukses') {
+                echo '<div class="status-message">✅ Data berhasil dihapus!</div>';
+            } elseif ($status == 'edit_sukses') {
+                echo '<div class="status-message">✅ Data berhasil diupdate!</div>';
+            }
+        }
+        
+        // =============================================
         // LOGIKA PENCARIAN
         // =============================================
         $keyword = '';
@@ -178,7 +237,7 @@
             $is_searching = true;
             $keyword = trim($_GET['keyword']);
             
-            // Query dengan pencarian (gunakan LIKE untuk mencari sebagai)
+            // Query dengan pencarian (gunakan LIKE)
             $keyword_like = "%$keyword%";
             $query = "SELECT * FROM kendaraan 
                       WHERE merk_kendaraan LIKE ? 
@@ -235,57 +294,60 @@
                     <th>Harga Sewa</th>
                     <th>Kondisi Mesin</th>
                     <th>Status</th>
+                    <th>Aksi</th>
                 </tr>
             </thead>
             <tbody>
                 <?php
                 // Cek apakah ada data
                 if ($jumlah_data > 0):
-                    // Looping data dari database dengan mysqli_fetch_assoc
                     while ($row = mysqli_fetch_assoc($result)):
-                        // Format harga
                         $harga_format = "Rp " . number_format($row['harga_sewa'], 0, ',', '.');
                         
-                        // Tentukan status berdasarkan kondisi mesin
                         if ($row['kondisi_mesin'] == 'Service') {
-                            $status = '<span class="tidak-tersedia">❌ Tidak Tersedia - Sedang di Bengkel</span>';
+                            $status_display = '<span class="tidak-tersedia">❌ Tidak Tersedia</span>';
                         } else {
-                            $status = '<span class="tersedia">✅ Siap Disewa</span>';
+                            $status_display = '<span class="tersedia">✅ Siap Disewa</span>';
                         }
-                        
-                        // Tampilkan baris tabel
-                        echo "<tr>";
-                        echo "<td>" . $row['id'] . "</td>";
-                        echo "<td>" . htmlspecialchars($row['merk_kendaraan']) . "</td>";
-                        echo "<td>" . htmlspecialchars($row['plat_nomor']) . "</td>";
-                        echo "<td>" . $harga_format . "</td>";
-                        echo "<td>" . $row['kondisi_mesin'] . "</td>";
-                        echo "<td>" . $status . "</td>";
-                        echo "</tr>";
+                ?>
+                <tr>
+                    <td><?= $row['id'] ?></td>
+                    <td><?= htmlspecialchars($row['merk_kendaraan']) ?></td>
+                    <td><?= htmlspecialchars($row['plat_nomor']) ?></td>
+                    <td><?= $harga_format ?></td>
+                    <td><?= $row['kondisi_mesin'] ?></td>
+                    <td><?= $status_display ?></td>
+                    <td>
+                        <div class="action-buttons">
+                            <a href="edit.php?id=<?= $row['id'] ?>" class="btn-edit">✏️ Edit</a>
+                            <a href="hapus.php?id=<?= $row['id'] ?>" 
+                               onclick="return confirm('Yakin ingin menghapus data <?= $row['merk_kendaraan'] ?>?')" 
+                               class="btn-hapus">🗑️ Hapus</a>
+                        </div>
+                    </td>
+                </tr>
+                <?php 
                     endwhile;
                 else:
-                    // Tampilkan pesan jika data tidak ditemukan
-                    echo '<tr><td colspan="6" class="not-found">';
-                    echo '<i>🔍</i>';
-                    echo '<h3>Data Tidak Ditemukan</h3>';
-                    if ($is_searching) {
-                        echo '<p>Maaf, kendaraan dengan kata kunci "' . htmlspecialchars($keyword) . '" tidak ditemukan.</p>';
-                    } else {
-                        echo '<p>Belum ada data kendaraan di database.</p>';
-                    }
-                    echo '<p><a href="tambah_data.php" style="color: #4CAF50;">Tambah data sekarang</a></p>';
-                    echo '</td></tr>';
-                endif;
-                
-                // Bebaskan memory
-                mysqli_free_result($result);
                 ?>
+                <tr>
+                    <td colspan="7" class="not-found">
+                        <i>🔍</i>
+                        <h3>Data Tidak Ditemukan</h3>
+                        <?php if ($is_searching): ?>
+                            <p>Maaf, kendaraan dengan kata kunci "<?= htmlspecialchars($keyword) ?>" tidak ditemukan.</p>
+                        <?php else: ?>
+                            <p>Belum ada data kendaraan di database.</p>
+                        <?php endif; ?>
+                    </td>
+                </tr>
+                <?php endif; ?>
             </tbody>
         </table>
         
         <!-- Footer -->
         <div class="footer-actions">
-            <small>Total Data: <?php echo $jumlah_data; ?> kendaraan</small>
+            <small>Total Data: <?= $jumlah_data ?> kendaraan</small>
         </div>
         
         <!-- Keterangan -->
