@@ -1,3 +1,32 @@
+<?php
+// Mulai session
+session_start();
+
+// Proteksi halaman - cek apakah user sudah login
+if (!isset($_SESSION['is_logged_in'])) {
+    header("Location: login.php");
+    exit();
+}
+
+// Include koneksi database
+include 'koneksi.php';
+
+// Tampilkan pesan status
+if (isset($_GET['status'])) {
+    $status = $_GET['status'];
+    
+    if ($status == 'hapus_sukses') {
+        echo '<div style="background-color: #d4edda; color: #155724; padding: 10px; border-radius: 5px; margin-bottom: 20px; text-align: center; border: 1px solid #c3e6cb;">';
+        echo '✅ Data berhasil dihapus!';
+        echo '</div>';
+    } elseif ($status == 'edit_sukses') {
+        echo '<div style="background-color: #d4edda; color: #155724; padding: 10px; border-radius: 5px; margin-bottom: 20px; text-align: center; border: 1px solid #c3e6cb;">';
+        echo '✅ Data berhasil diupdate!';
+        echo '</div>';
+    }
+}
+?>
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -42,7 +71,7 @@
             background-color: #45a049;
         }
         
-        /* Style untuk form pencarian */
+       
         .search-form {
             display: flex;
             gap: 10px;
@@ -88,7 +117,7 @@
             background-color: #5a6268;
         }
         
-        /* Style untuk info pencarian */
+        
         .search-info {
             background-color: #e7f3ff;
             padding: 10px;
@@ -97,7 +126,7 @@
             border-left: 4px solid #2196F3;
         }
         
-        /* Style untuk tabel */
+       
         table {
             width: 100%;
             border-collapse: collapse;
@@ -126,8 +155,7 @@
             color: red;
             font-weight: bold;
         }
-        
-        /* Style untuk tombol aksi */
+       
         .btn-edit {
             background-color: #2196F3;
             color: white;
@@ -162,7 +190,7 @@
             gap: 5px;
         }
         
-        /* Style untuk pesan data tidak ditemukan */
+        
         .not-found {
             text-align: center;
             padding: 40px;
@@ -185,7 +213,7 @@
             margin-top: 20px;
         }
         
-        /* Style untuk pesan status */
+        
         .status-message {
             background-color: #d4edda;
             color: #155724;
@@ -199,23 +227,28 @@
 </head>
 <body>
     <div class="container">
-        <h1>🚗 RENTAL KENDARAAN NAJWA</h1>
+        <h1>🚗 RENTAL KENDARAAN</h1>
         
-        <!-- Header dengan tombol tambah data -->
-        <div class="header-actions">
-            <div></div>
-            <a href="tambah_data.php" class="btn-tambah">➕ Tambah Data Baru</a>
-        </div>
+        
+        <!-- Header dengan tombol tambah data dan logout -->
+<div class="header-actions">
+    <div>
+        <span style="font-weight: bold; color: #4CAF50;">
+            👋 Selamat datang, <?= htmlspecialchars($_SESSION['username']) ?>!
+        </span>
+    </div>
+    <div>
+        <a href="tambah_data.php" class="btn-tambah">➕ Tambah Data Baru</a>
+        <a href="logout.php" class="btn-tambah" 
+           style="background-color: #f44336; margin-left: 10px;">🚪 Logout</a>
+    </div>
+</div>
         
         <?php
-        // =============================================
-        // KONEKSI KE DATABASE
-        // =============================================
+        
         include 'koneksi.php';
         
-        // =============================================
-        // TAMPILKAN PESAN STATUS (HAPUS/EDIT)
-        // =============================================
+       
         if (isset($_GET['status'])) {
             $status = $_GET['status'];
             
@@ -226,40 +259,38 @@
             }
         }
         
-        // =============================================
-        // LOGIKA PENCARIAN
-        // =============================================
+        
         $keyword = '';
         $is_searching = false;
         
-        // Cek apakah ada parameter GET 'keyword'
+       
         if (isset($_GET['keyword']) && !empty(trim($_GET['keyword']))) {
             $is_searching = true;
             $keyword = trim($_GET['keyword']);
             
-            // Query dengan pencarian (gunakan LIKE)
+            
             $keyword_like = "%$keyword%";
             $query = "SELECT * FROM kendaraan 
                       WHERE merk_kendaraan LIKE ? 
                       OR plat_nomor LIKE ?
                       ORDER BY id ASC";
             
-            // Prepare statement untuk keamanan
+         
             $stmt = mysqli_prepare($conn, $query);
             mysqli_stmt_bind_param($stmt, "ss", $keyword_like, $keyword_like);
             mysqli_stmt_execute($stmt);
             $result = mysqli_stmt_get_result($stmt);
         } else {
-            // Query semua data
+           
             $query = "SELECT * FROM kendaraan ORDER BY id ASC";
             $result = mysqli_query($conn, $query);
         }
         
-        // Hitung jumlah data
+        
         $jumlah_data = mysqli_num_rows($result);
         ?>
         
-        <!-- Form Pencarian -->
+
         <form method="GET" action="index.php" class="search-form">
             <input type="text" 
                    name="keyword" 
@@ -269,14 +300,13 @@
             <button type="submit">Cari</button>
         </form>
         
-        <!-- Tombol Reset Pencarian -->
         <?php if ($is_searching): ?>
         <div style="text-align: right; margin-bottom: 10px;">
             <a href="index.php" class="btn-reset">↺ Reset Pencarian</a>
         </div>
         <?php endif; ?>
         
-        <!-- Info pencarian -->
+       
         <?php if ($is_searching): ?>
         <div class="search-info">
             <strong>🔍 Hasil pencarian untuk:</strong> "<?php echo htmlspecialchars($keyword); ?>"<br>
@@ -284,7 +314,6 @@
         </div>
         <?php endif; ?>
         
-        <!-- Tabel Data Kendaraan -->
         <table>
             <thead>
                 <tr>
@@ -299,7 +328,7 @@
             </thead>
             <tbody>
                 <?php
-                // Cek apakah ada data
+              
                 if ($jumlah_data > 0):
                     while ($row = mysqli_fetch_assoc($result)):
                         $harga_format = "Rp " . number_format($row['harga_sewa'], 0, ',', '.');
@@ -345,12 +374,10 @@
             </tbody>
         </table>
         
-        <!-- Footer -->
         <div class="footer-actions">
             <small>Total Data: <?= $jumlah_data ?> kendaraan</small>
         </div>
         
-        <!-- Keterangan -->
         <div style="text-align: center; margin-top: 30px; padding: 15px; background-color: #f9f9f9; border-radius: 5px;">
             <p><strong>Keterangan:</strong></p>
             <p><span style="color: green;">✅ Siap Disewa</span> (Kondisi Mesin Bagus)</p>

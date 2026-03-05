@@ -1,3 +1,12 @@
+<?php
+session_start();
+if (!isset($_SESSION['is_logged_in'])) {
+    header("Location: login.php");
+    exit();
+}
+include 'koneksi.php';
+?>
+
 <!DOCTYPE html>
 <html lang="id">
 <head>

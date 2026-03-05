@@ -1,3 +1,12 @@
+<?php
+session_start();
+if (!isset($_SESSION['is_logged_in'])) {
+    header("Location: login.php");
+    exit();
+}
+include 'koneksi.php';
+?>
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -84,21 +93,21 @@
         <h1>✏️ EDIT DATA KENDARAAN</h1>
         
         <?php
-        // Include koneksi database
+       
         include 'koneksi.php';
         
-        // Cek apakah ada ID yang dikirim
+       
         if (isset($_GET['id'])) {
             $id = $_GET['id'];
             
-            // Query SELECT untuk mengambil data yang akan diedit
+            
             $query = "SELECT * FROM kendaraan WHERE id = ?";
             $stmt = mysqli_prepare($conn, $query);
             mysqli_stmt_bind_param($stmt, "i", $id);
             mysqli_stmt_execute($stmt);
             $result = mysqli_stmt_get_result($stmt);
             
-            // Cek apakah data ditemukan
+           
             if (mysqli_num_rows($result) > 0) {
                 $row = mysqli_fetch_assoc($result);
             } else {
@@ -112,9 +121,9 @@
         }
         ?>
         
-        <!-- Form Edit Data -->
+        
         <form method="POST" action="proses_edit.php">
-            <!-- Hidden input untuk menyimpan ID -->
+           
             <input type="hidden" name="id" value="<?= $row['id'] ?>">
             
             <div class="form-group">

@@ -1,27 +1,36 @@
 <?php
-// =============================================
-// FILE: proses_edit.php - Memproses Update Data
-// =============================================
 
+// Mulai session
+session_start();
+
+// Proteksi halaman - cek apakah user sudah login
+if (!isset($_SESSION['is_logged_in'])) {
+    header("Location: login.php");
+    exit();
+}
+
+// Include koneksi database
+include 'koneksi.php';
+?>
 include 'koneksi.php';
 
-// Cek apakah form disubmit
+
 if (isset($_POST['submit'])) {
     
-    // Tangkap data dari form
+    
     $id = $_POST['id'];
     $merk = trim($_POST['merk']);
     $plat = trim($_POST['plat']);
     $harga = trim($_POST['harga']);
     $kondisi = trim($_POST['kondisi']);
     
-    // Validasi sederhana
+   
     if (empty($merk) || empty($plat) || empty($harga) || empty($kondisi)) {
         header("Location: edit.php?id=$id&error=empty");
         exit();
     }
     
-    // Query UPDATE dengan prepared statement
+
     $query = "UPDATE kendaraan SET 
               merk_kendaraan = ?, 
               plat_nomor = ?, 
@@ -32,12 +41,12 @@ if (isset($_POST['submit'])) {
     $stmt = mysqli_prepare($conn, $query);
     
     if ($stmt) {
-        // Bind parameter (ssssi = string, string, string, string, integer)
+        
         mysqli_stmt_bind_param($stmt, "ssssi", $merk, $plat, $harga, $kondisi, $id);
         
-        // Eksekusi query
+       
         if (mysqli_stmt_execute($stmt)) {
-            // Jika berhasil, redirect ke index
+           
             header("Location: index.php?status=edit_sukses");
             exit();
         } else {
@@ -51,7 +60,7 @@ if (isset($_POST['submit'])) {
     }
     
 } else {
-    // Jika akses langsung tanpa submit
+    
     header("Location: index.php");
     exit();
 }
